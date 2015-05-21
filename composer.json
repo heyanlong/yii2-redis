@@ -1,0 +1,38 @@
+{
+    "name": "heyanlong/yii2-redis",
+    "description": "Redis 3.x Cache, Session and ActiveRecord for the Yii framework",
+    "keywords": [
+        "yii2",
+        "redis",
+        "active-record",
+        "cache",
+        "session"
+    ],
+    "minimum-stability": "stable",
+    "type": "yii2-extension",
+    "license": "BSD-3-Clause",
+    "support": {
+        "issues": "https://github.com/heyanlong/yii2-redis/issues",
+        "forum": "http://www.yiiframework.com/forum/",
+        "wiki": "http://www.yiiframework.com/wiki/",
+        "irc": "irc://irc.freenode.net/yii",
+        "source": "https://github.com/heyanlong/yii2-redis"
+    },
+    "authors": [
+        {
+            "name": "heyanlong",
+            "email": "yanlong_he@163.com"
+        }
+    ],
+    "require": {
+        "yiisoft/yii2": ">=2.0.4"
+    },
+    "autoload": {
+        "psr-4": {"yii\\redis\\": ""}
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "2.0.x-dev"
+        }
+    }
+}
