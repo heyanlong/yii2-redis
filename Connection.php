@@ -32,7 +32,15 @@ class Connection extends Component
 
 
     public $redisCommands = [
+        'PING'
+    ];
 
+    public $redisWriteCommands = [
+        'SET',
+    ];
+
+    public $redisReadCommands = [
+        'GET',
     ];
 
     public function __sleep()
@@ -63,7 +71,7 @@ class Connection extends Component
         if (!empty($this->slave)) {
             foreach ($this->slave as $node) {
                 $connection = $this->connect($node);
-                array_push($this->_socket['master'], $connection);
+                array_push($this->_socket['slave'], $connection);
             }
         }
     }
@@ -103,23 +111,83 @@ class Connection extends Component
     public function __call($name, $params)
     {
         $redisCommand = strtoupper(Inflector::camel2words($name, false));
-        if (in_array($redisCommand, $this->redisCommands)) {
-            return $this->executeCommand($name, $params);
+        if (in_array($redisCommand, $this->redisWriteCommands)) {
+
+            $node = $this->_socket['master'][$this->getMasterNode($params[0])];
+            return $this->executeCommand($name, $params, $node);
+
+        } else if (in_array($redisCommand, $this->redisReadCommands)) {
+
+            $node = $this->_socket['master'][$this->getSlaveNode($params[0])];
+            return $this->executeCommand($name, $params, $node);
+
         } else {
             return parent::__call($name, $params);
         }
     }
 
-    public function executeCommand($name, $params = [])
+    public function executeCommand($name, $params = [], $node)
     {
         $this->open();
+        $socket = $node;
 
-        // TODO
+        array_unshift($params, $name);
+        $command = '*' . count($params) . "\r\n";
+
+        foreach ($params as $arg) {
+            $command .= '$' . mb_strlen($arg, '8bit') . "\r\n" . $arg . "\r\n";
+        }
+        \Yii::trace("Executing Redis Command: {$name}", __METHOD__);
+        fwrite($socket, $command);
+
+        return $this->parseResponse(implode(' ', $params), $socket);
     }
 
-    private function parseResponse($command)
+    private function parseResponse($command, $socket)
     {
-        // TODO
+        if (($line = fgets($socket)) === false) {
+            throw new Exception("Failed to read from socket.\nRedis command was: " . $command);
+        }
+
+        $type = $line[0];
+        $line = mb_substr($line, 1, -2, '8bit');
+
+        switch ($type) {
+            case '+': // Status reply
+                if ($line === 'OK' || $line === 'PONG') {
+                    return true;
+                } else {
+                    return $line;
+                }
+            case '-': // Error reply
+                throw new Exception("Redis error: " . $line . "\nRedis command was: " . $command);
+            case ':': // Integer reply
+                // no cast to int as it is in the range of a signed 64 bit integer
+                return $line;
+            case '$': // Bulk replies
+                if ($line == '-1') {
+                    return null;
+                }
+                $length = $line + 2;
+                $data = '';
+                while ($length > 0) {
+                    if (($block = fread($socket, $length)) === false) {
+                        throw new Exception("Failed to read from socket.\nRedis command was: " . $command);
+                    }
+                    $data .= $block;
+                    $length -= mb_strlen($block, '8bit');
+                }
+                return mb_substr($data, 0, -2, '8bit');
+            case '*': // Multi-bulk replies
+                $count = (int)$line;
+                $data = [];
+                for ($i = 0; $i < $count; $i++) {
+                    $data[] = $this->parseResponse($command, $socket);
+                }
+                return $data;
+            default:
+                throw new Exception('Received illegal data from redis: ' . $line . "\nRedis command was: " . $command);
+        }
     }
 
     private function connect($node)
@@ -141,23 +209,28 @@ class Connection extends Component
                 stream_set_timeout($socket, $timeout = (int)$this->dataTimeout, (int)(($this->dataTimeout - $timeout) * 1000000));
             }
 
-            if ($this->password !== null) {
-                $this->executeCommand('AUTH', [$this->password]);
-            }
-
-            $this->executeCommand('SELECT', [$this->database]);
-            $this->initConnection();
-
         } else {
             \Yii::error("Failed to open redis DB connection ($connection): $errorNumber - $errorDescription", __CLASS__);
             $message = YII_DEBUG ? "Failed to open redis DB connection ($connection): $errorNumber - $errorDescription" : 'Failed to open DB connection.';
             throw new Exception($message, $errorDescription, (int)$errorNumber);
         }
+
+        return $socket;
     }
 
     private function disconnect($node)
     {
-        $this->executeCommand('QUIT');
+        //$this->executeCommand('QUIT');
         stream_socket_shutdown($node, STREAM_SHUT_RDWR);
+    }
+
+    public function getMasterNode($name)
+    {
+        return (abs(crc32($name)) % (count($this->_socket['master']))) + 1;
+    }
+
+    public function getSlaveNode($name)
+    {
+        return (abs(crc32($name)) % (count($this->_socket['slave']))) + 1;
     }
 }
