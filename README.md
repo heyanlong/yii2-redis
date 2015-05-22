@@ -31,7 +31,7 @@ php composer.phar require --prefer-dist heyanlong/yii2-redis
 or add
 
 ```json
-"yiisoft/yii2-redis": "~2.0.0"
+"heyanlong/yii2-redis": "~2.0.0"
 ```
 
 to the require section of your composer.json.
@@ -43,5 +43,22 @@ Configuration
 To use this extension, you have to configure the Connection class in your application configuration:
 
 ```php
-// TODO
+return [
+    //....
+    'components' => [
+        'redis' => [
+            'class' => 'heyanlong\redis\Connection',
+            'master' => [
+                '10.155.20.169:6379',
+                '10.155.20.167:6391',
+                '10.155.20.168:6379',
+                '10.155.20.167:6380',
+//                'localhost:6379',
+            ],
+            'database' => 0,
+        ],
+
+
+    ]
+];
 ```
