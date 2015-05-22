@@ -28,7 +28,7 @@
         "yiisoft/yii2": ">=2.0.4"
     },
     "autoload": {
-        "psr-4": {"yii\\redis\\": ""}
+        "psr-4": {"heyanlong\\redis\\": ""}
     },
     "extra": {
         "branch-alias": {
