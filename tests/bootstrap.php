@@ -14,4 +14,4 @@ require_once(__DIR__ . '/../vendor/yiisoft/yii2/Yii.php');
 
 
 Yii::setAlias('@yiiunit/extensions/redis', __DIR__);
-Yii::setAlias('@yii/redis', dirname(__DIR__));
+Yii::setAlias('@heyanlong/redis', dirname(__DIR__));

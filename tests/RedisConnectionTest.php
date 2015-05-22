@@ -16,7 +16,7 @@ class RedisConnectionTest extends TestCase
         $database = $db->database;
 
         $db->open();
-        //$this->assertTrue($db->ping());
+        $this->assertTrue($db->ping());
         $db->set('TESTKEY', 'TESTVALUE');
         $db->close();
 
@@ -25,11 +25,5 @@ class RedisConnectionTest extends TestCase
         $db->open();
         $this->assertEquals('TESTVALUE', $db->get('TESTKEY'));
         $db->close();
-
-//        $db = $this->getConnection(false);
-//        $db->database = 1;
-//        $db->open();
-//        $this->assertNull($db->get('TESTKEY'));
-//        $db->close();
     }
 }
