@@ -1,6 +1,6 @@
 {
     "name": "heyanlong/yii2-redis",
-    "description": "Redis 3.x Cache, Session and ActiveRecord for the Yii framework",
+    "description": "Redis 3.x Cluster Cache, Session and ActiveRecord for the Yii framework",
     "keywords": [
         "yii2",
         "redis",

@@ -1,4 +1,4 @@
-Redis 3.x Cache, Session and ActiveRecord for Yii 2
+Redis 3.x Cluster Cache, Session and ActiveRecord for Yii 2
 ===============================================
 
 This extension provides the [redis](http://redis.io/) key-value store support for the [Yii framework 2.0](http://www.yiiframework.com).
